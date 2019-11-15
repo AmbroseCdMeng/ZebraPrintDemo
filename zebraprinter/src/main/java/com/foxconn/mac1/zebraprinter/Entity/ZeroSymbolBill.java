@@ -53,6 +53,38 @@ public class ZeroSymbolBill {
      */
     private String var2;
 
+    /**
+     * Constructor without params
+     */
+    public ZeroSymbolBill() {
+    }
+
+    /**
+     * Constructor with all params
+     *
+     * @param type
+     * @param newGuid
+     * @param var1
+     * @param pn
+     * @param date
+     * @param var2
+     * @param qty
+     * @param unit
+     * @param oldGuid
+     * @param splitQty
+     */
+    public ZeroSymbolBill(String type, String newGuid, String var1, String pn, String date, String var2, Integer qty, String unit, String oldGuid, Integer splitQty) {
+        this.type = type;
+        this.newGuid = newGuid;
+        this.var1 = var1;
+        this.pn = pn;
+        this.date = date;
+        this.var2 = var2;
+        this.qty = qty;
+        this.unit = unit;
+        this.oldGuid = oldGuid;
+        this.splitQty = splitQty;
+    }
 
     /**
      * Getter & Setter

@@ -30,14 +30,19 @@ public class MainActivity extends AppCompatActivity {
 
     public void printTest(){
         try {
-            ZQ520Printer zq520Printer = new ZQ520Printer();
-            ResultObj resultObj = zq520Printer.zeroSymbolBill();
-            Toast.makeText(MainActivity.this, String.valueOf(resultObj.isStatus()), Toast.LENGTH_SHORT).show();
+            /* Example for Test */
+            String BQcode = "W,VCN00182631190729C0001,P2a-J60102,2T459M000-000-G5,20190729,WmL-J76036,7200,PCS";
+            Integer split = 2000;
+
+            ZQ520Printer zq520Printer = new ZQ520Printer(this);
+            ResultObj resultObj = zq520Printer.zeroSymbolBill(BQcode, split);
             if (resultObj.isStatus()){
-                Toast.makeText(MainActivity.this, "success", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "print test success", Toast.LENGTH_SHORT).show();
             }else{
                 Toast.makeText(MainActivity.this, resultObj.getMessage(), Toast.LENGTH_SHORT).show();
             }
+
+            /* Example end */
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
