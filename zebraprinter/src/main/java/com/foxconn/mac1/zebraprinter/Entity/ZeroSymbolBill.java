@@ -1,3 +1,6 @@
+/**
+ * CopyRight© 2019   MAC(I)智網平臺開發部 版權所有
+ */
 package com.foxconn.mac1.zebraprinter.Entity;
 
 /**
