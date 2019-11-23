@@ -18,7 +18,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        btnPrint = this.findViewById(R.id.btnPrintTest);
+        btnPrint = (Button) this.findViewById(R.id.btnPrintTest);
         btnPrint.setOnClickListener(new View.OnClickListener(){
 
             @Override
@@ -26,6 +26,7 @@ public class MainActivity extends AppCompatActivity {
                 printTest();
             }
         });
+
     }
 
     public void printTest(){
@@ -37,12 +38,13 @@ public class MainActivity extends AppCompatActivity {
             ZQ520Printer zq520Printer = new ZQ520Printer(this);
             ResultObj resultObj = zq520Printer.zeroSymbolBill(BQcode, split);
             if (resultObj.isStatus()){
-                Toast.makeText(MainActivity.this, "print test success", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, resultObj.getMessage(), Toast.LENGTH_SHORT).show();
             }else{
                 Toast.makeText(MainActivity.this, resultObj.getMessage(), Toast.LENGTH_SHORT).show();
             }
 
             /* Example end */
+            
         } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();

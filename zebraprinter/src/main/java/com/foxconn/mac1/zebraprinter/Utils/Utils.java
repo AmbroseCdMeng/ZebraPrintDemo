@@ -49,12 +49,12 @@ public class Utils {
                 is.close();
                 return baos.toString();
             }
+            return String.valueOf(code);
         } catch (MalformedURLException e) {
-            return e.getMessage();
+            return "false";
         } catch (IOException e) {
-            return e.getMessage();
+            return "false";
         }
-        return null;
     }
 
 
@@ -90,9 +90,9 @@ public class Utils {
                 is.close();
                 return baos.toString();
             }
+            return String.valueOf(code);
         } catch (IOException e) {
-            return e.getMessage();
+            return "false";
         }
-        return null;
     }
 }

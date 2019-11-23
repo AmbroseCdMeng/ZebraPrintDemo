@@ -20,6 +20,8 @@ import com.zebra.sdk.printer.ZebraPrinterLinkOs;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.LineNumberReader;
 import java.util.ArrayList;
 import java.util.Set;
 
@@ -29,20 +31,30 @@ import java.util.Set;
 public class ZQ520Printer {
 
     private Context context;
+    private Connection connection = null;
+    private boolean isConnByBluetooth = true;
+    private String bluetoothMacAddress = "";
+    private String tcpAddress = "127.0.0.1";
+    private Integer tcpPortNumber = 0;
+    private String errMsg = "";
+    private final String ip = "";
+    private final String mac = this.getLocalMacAddress();
+    private final String appName = null;
+    private final String appVersionName = null;
+    private final String appVersionCode = null;
+    private final String arrName;
+    private final String arrVersionName;
+    private final String arrVersionCode;
 
     public ZQ520Printer(Context context) {
         this.context = context;
+//        this.appName = PackageUtils.getApplicationName(this.context);
+//        this.appVersionName = PackageUtils.getVersionName(this.context);
+//        this.appVersionCode = PackageUtils.getVersionCode(this.context);
+        this.arrName = "ZebraPrinter";
+        this.arrVersionName = "1.0";
+        this.arrVersionCode = "1";
     }
-
-    private Connection connection = null;
-    private boolean isConnByBluetooth = true;
-
-    private String bluetoothMacAddress = "";// Test Machine mac address:    AC:3F:A4:E4:D6:3F
-    private String tcpAddress = "127.0.0.1";
-    private Integer tcpPortNumber = 0;
-
-    private String printerStatusMsg = "";
-
 
     /**
      * ZeroSymbolBill Printer
@@ -72,7 +84,7 @@ public class ZQ520Printer {
             zsb.setUnit(codeMsgArr[7].trim());     // unit
             zsb.setSplitQty(splitQty);
         } catch (NumberFormatException e) {
-            return new ResultObj(false, "Exc-03: "+e.getMessage());
+            return new ResultObj(false, "Exc-03: " + e.getMessage());
         }
 
         if (zsb.getSplitQty() >= zsb.getQty())
@@ -125,27 +137,32 @@ public class ZQ520Printer {
             PrinterStatus printerStatus = (linkOsPrinter != null) ? linkOsPrinter.getCurrentStatus() : printer.getCurrentStatus();
 
             if (printerStatus.isReadyToPrint) {
-                return sendToPrint(printer, zsbs);
+                ResultObj obj = sendToPrint(printer, zsbs);
+                errMsg = obj.getMessage();
             } else if (printerStatus.isHeadOpen)
-                printerStatusMsg = "Err-01: Head Open! \n Please close Printer Head to print. ";
+                errMsg = "Err-01: Head Open! \n Please close Printer Head to print. ";
             else if (printerStatus.isHeadCold)
-                printerStatusMsg = "Err-02: Head Cold! \n Please try again. ";
+                errMsg = "Err-02: Head Cold! \n Please try again. ";
             else if (printerStatus.isHeadTooHot)
-                printerStatusMsg = "Err-03: Head too hot! \n Please do it later. ";
+                errMsg = "Err-03: Head too hot! \n Please do it later. ";
             else if (printerStatus.isPaperOut)
-                printerStatusMsg = "Err-04: Media Out! \n Please load Media to Print. ";
+                errMsg = "Err-04: Media Out! \n Please load Media to Print. ";
             else if (printerStatus.isPartialFormatInProgress)
-                printerStatusMsg = "Err-05: Head Open! \n Please try again later. ";
+                errMsg = "Err-05: Head Open! \n Please try again later. ";
             else if (printerStatus.isPaused)
-                printerStatusMsg = "Err-06: Printer Paused. ";
+                errMsg = "Err-06: Printer Paused. ";
             else if (printerStatus.isReceiveBufferFull)
-                printerStatusMsg = "Err-07: Buffer full! \n Please do it later. ";
+                errMsg = "Err-07: Buffer full! \n Please do it later. ";
             else if (printerStatus.isRibbonOut)
-                printerStatusMsg = "Err-08: Ribbon Out! \n Please retry after adjustment. ";
+                errMsg = "Err-08: Ribbon Out! \n Please retry after adjustment. ";
 
             connection.close();
 
-            return new ResultObj("".equals(printerStatusMsg), printerStatusMsg);
+            /**
+             * record the first use log
+             */
+            String result = recordFirstUseLog(ip, arrName + arrVersionName + "." + arrVersionCode);
+            return new ResultObj("".equals(errMsg), ip + "\n" + arrName + "\n" + arrVersionCode + "\n" + arrVersionName + "\n\n" + result);
         } catch (Exception e) {
             return new ResultObj(false, "Exc-02: " + e.getMessage());
         } finally {
@@ -162,7 +179,7 @@ public class ZQ520Printer {
                 file.createNewFile();
             createZPLFile(printer, filename, zsbs);
             printer.sendFileContents(file.getAbsolutePath());
-            return new ResultObj(true, "filepath: " + file.getAbsolutePath());
+            return new ResultObj(true, "");
         } catch (IOException e) {
             return new ResultObj(false, e.getMessage());
         } catch (ConnectionException e) {
@@ -178,7 +195,7 @@ public class ZQ520Printer {
 
         PrinterLanguage printerLanguage = printer.getPrinterControlLanguage();
 
-        if (printerLanguage == printerLanguage.ZPL) {
+        if (printerLanguage == PrinterLanguage.ZPL) {
             StringBuilder sb = new StringBuilder();
             for (ZeroSymbolBill zsb : zsbs) {
                 sb.append(buildZPLTemplate(zsb));
@@ -238,5 +255,48 @@ public class ZQ520Printer {
         for (BluetoothDevice device : devices)
             macAddressList.add(device.getAddress());
         return macAddressList;
+    }
+
+
+    /**
+     * get Local Mac Address
+     *
+     * @return
+     */
+    private String getLocalMacAddress() {
+        String macSerial = "";
+        try {
+            Process pp = Runtime.getRuntime().exec(
+                    "cat /sys/class/net/wlan0/address");
+            InputStreamReader ir = new InputStreamReader(pp.getInputStream());
+            LineNumberReader input = new LineNumberReader(ir);
+
+            String line;
+            while ((line = input.readLine()) != null) {
+                macSerial += line.trim();
+            }
+
+            input.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return macSerial;
+    }
+
+
+    /**
+     * send a request to call the C# API
+     * record the first use log
+     *
+     * @param ip      the client ip address
+     * @param creater application name and version code
+     * @return
+     */
+    public String recordFirstUseLog(String ip, String creater) {
+        final String api = "http://10.151.138.63:8080/api/Home/InsertPrintLog";
+        String path = api + "?ipaddress=" + ip + "&creater=" + creater;
+        String result = Utils.doGet(path);
+        return result;
     }
 }
