@@ -22,6 +22,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Set;
 
@@ -65,7 +66,7 @@ public class ZQ520Printer {
      * @param splitQty split quantity
      * @return
      */
-    public ResultObj zeroSymbolBill(String codeMsg, Integer splitQty) {
+    public ResultObj zeroSymbolBill(String codeMsg, Double splitQty) {
 
         String[] codeMsgArr = codeMsg.split(",");
         ArrayList<ZeroSymbolBill> zsbs = new ArrayList<>();
@@ -80,7 +81,7 @@ public class ZQ520Printer {
             zsb.setPn(codeMsgArr[3].trim());       // p/n
             zsb.setDate(codeMsgArr[4].trim());     // date
             zsb.setVar2(codeMsgArr[5].trim());     //
-            zsb.setQty(Integer.valueOf(codeMsgArr[6].trim())); // quantity
+            zsb.setQty(Double.valueOf(codeMsgArr[6].trim())); // quantity
             zsb.setUnit(codeMsgArr[7].trim());     // unit
             zsb.setSplitQty(splitQty);
         } catch (NumberFormatException e) {
@@ -101,7 +102,7 @@ public class ZQ520Printer {
                 zsb.getSplitQty(),// first split.    quantity = split quantity
                 zsb.getUnit(),
                 zsb.getNewGuid(),   // become the old guid after split
-                0
+                0d
         ));
 
         zsbs.add(new ZeroSymbolBill(
@@ -114,7 +115,7 @@ public class ZQ520Printer {
                 zsb.getQty() - zsb.getSplitQty(),// second split.    quantity = quantity - split quantity
                 zsb.getUnit(),
                 zsb.getNewGuid(),   // become the old guid after split
-                0
+                0d
         ));
         /* BQ code split completion */
 
@@ -161,8 +162,8 @@ public class ZQ520Printer {
             /**
              * record the first use log
              */
-            String result = recordFirstUseLog(ip, arrName + arrVersionName + "." + arrVersionCode);
-            return new ResultObj("".equals(errMsg), ip + "\n" + arrName + "\n" + arrVersionCode + "\n" + arrVersionName + "\n\n" + result);
+            String result = recordFirstUseLog(mac, arrName + arrVersionName + "." + arrVersionCode);
+            return new ResultObj("".equals(errMsg), errMsg + "\n" + result);
         } catch (Exception e) {
             return new ResultObj(false, "Exc-02: " + e.getMessage());
         } finally {
@@ -184,7 +185,6 @@ public class ZQ520Printer {
             return new ResultObj(false, e.getMessage());
         } catch (ConnectionException e) {
             return new ResultObj(false, e.getMessage());
-
         }
     }
 
@@ -209,9 +209,31 @@ public class ZQ520Printer {
 
     private String buildZPLTemplate(ZeroSymbolBill zsb) {
 
+        /* Example ZPL String */
+        /**
+         * ^XA
+         * ^LL320
+         * ^PW400
+         * ^LH0,0
+         * ^CI26
+         *
+         * ^SEE:GB18030.DAT
+         * ^FO48,20^A0N,45,45^FDZero Symbol Bill^FS
+         * ^FO24,62^A0N,40,40^FDP/N:^FS
+         * ^FO54,102^A0N,35,35^FD2T459M000-000-G5^FS
+         * ^FO24,142^A0N,40,40^FDQTY:^FS
+         * ^FO54,182^A0N,35,35^FD200000 PCS^FS
+         * ^FO24,222^A0N,40,40^FDDATE:^FS\
+         * ^FO54,264^A0N,35,35^FD20191107^FS
+         * ^FO237,142^BQN,2,3^FD   W,a9b577fa20fd4410bc5583ba099f4d41,P2a-JA0146,2A201T100-000-G1,2019/12/09,20191209-02,2000.0PCS,cfc8d9bcd30e42eaac8550e78a1d0326^FS
+         * ^XZ
+         */
+
         final String formName = "Zero Symbol Bill";
 
         zsb.setNewGuid(Utils.GUID());
+
+        DecimalFormat df = new DecimalFormat("###.###");
 
         StringBuilder sb = new StringBuilder();
 
@@ -221,16 +243,15 @@ public class ZQ520Printer {
                 .append("^LH0,0\n")
                 .append("^CI26\n")
                 .append("^SEE:GB18030.DAT\n")
+                .append("^FO48,20^A0N,45,45^FD" + formName + "^FS\n")//Zero Symbol Bill
+                .append("^FO24,62^A0N,40,40^FDP/N:^FS\n")//P/N
+                .append("^FO54,102^A0N,35,35^FD" + zsb.getPn() + "^FS\n")//2T459M000-000-G5
+                .append("^FO24,142^A0N,40,40^FDQTY:^FS\n")//QTY
+                .append("^FO54,182^A0N,35,35^FD" + df.format(zsb.getQty()) + " PCS^FS\n")//200000
+                .append("^FO24,222^A0N,40,40^FDDATE:^FS\n")//DATE
+                .append("^FO54,264^A0N,35,35^FD" + zsb.getDate() + "^FS\n")//20191107
 
-                .append("^FO48,20^AEN,10,10^FD" + formName + "^FS\n")//Zero Symbol Bill
-                .append("^FO24,62^AEN,10,10^FDP/N:^FS\n")//P/N
-                .append("^FO54,102^AEN,10,10^FD" + zsb.getPn() + "^FS\n")//2T459M000-000-G5
-                .append("^FO24,142^AEN,10,10^FDQTY:^FS\n")//QTY
-                .append("^FO54,182^AEN,10,10^FD" + zsb.getQty() + " PCS^FS\n")//200000
-                .append("^FO24,222^AEN,10,10^FDDATE:^FS\n")//DATE
-                .append("^FO54,264^AEN,10,10^FD" + zsb.getDate() + "^FS\n")//20191107
-
-                .append("^FO280,172^BQN,2,2^FD\n")
+                .append("^FO237,142^BQN,2,3^FD\n")
                 .append("   " + zsb.getType()
                         + "," + zsb.getNewGuid()
                         + "," + zsb.getVar1()

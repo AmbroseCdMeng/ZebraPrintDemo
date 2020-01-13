@@ -33,8 +33,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             /* Example for Test */
             String BQcode = "W,VCN00182631190729C0001,P2a-J60102,2T459M000-000-G5,20190729,WmL-J76036,7200,PCS";
-            Integer split = 2000;
-
+            Double split = 2000d;
             ZQ520Printer zq520Printer = new ZQ520Printer(this);
             ResultObj resultObj = zq520Printer.zeroSymbolBill(BQcode, split);
             if (resultObj.isStatus()){

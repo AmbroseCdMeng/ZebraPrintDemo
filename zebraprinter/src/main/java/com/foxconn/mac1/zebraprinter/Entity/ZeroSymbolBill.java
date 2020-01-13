@@ -21,11 +21,11 @@ public class ZeroSymbolBill {
     /**
      * 数量：7200
      */
-    private Integer qty;
+    private Double qty;
     /**
      * 拆分：5000
      */
-    private Integer splitQty;
+    private Double splitQty;
     /**
      * 单位：PCS
      */
@@ -73,7 +73,7 @@ public class ZeroSymbolBill {
      * @param oldGuid
      * @param splitQty
      */
-    public ZeroSymbolBill(String type, String newGuid, String var1, String pn, String date, String var2, Integer qty, String unit, String oldGuid, Integer splitQty) {
+    public ZeroSymbolBill(String type, String newGuid, String var1, String pn, String date, String var2, Double qty, String unit, String oldGuid, Double splitQty) {
         this.type = type;
         this.newGuid = newGuid;
         this.var1 = var1;
@@ -106,19 +106,19 @@ public class ZeroSymbolBill {
         this.pn = pn;
     }
 
-    public Integer getQty() {
+    public Double getQty() {
         return qty;
     }
 
-    public void setQty(Integer qty) {
+    public void setQty(Double qty) {
         this.qty = qty;
     }
 
-    public Integer getSplitQty() {
+    public Double getSplitQty() {
         return splitQty;
     }
 
-    public void setSplitQty(Integer splitQty) {
+    public void setSplitQty(Double splitQty) {
         this.splitQty = splitQty;
     }
 
